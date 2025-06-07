@@ -41,9 +41,9 @@ typedef enum AutoStatus
 
 typedef enum Response
 {
-   FAIL = 0,
-   ACK,
-   DATA
+   RP_FAIL = 0,
+   RP_ACK,
+   RP_DATA
 } Response_t;
 
 typedef struct ValuesArray
@@ -117,13 +117,13 @@ bool ld2410_begin(LD2410_device_t *device);
 /**
  * @brief Call this function to gracefully close the sensor. Useful for entering sleep mode.
  */
-void end(LD2410_device_t *device);
+void ld2410_end(LD2410_device_t *device);
 
 /**
   @brief Call this function in the main loop
-  @return MyLD2410::DATA = (evaluates to true) if the latest frame contained data
-  @return MyLD2410::ACK  = (evaluates to true) if the latest frame contained a reply to a command
-  @return MyLD2410::FAIL = (evaluates to false) if no useful info was processed
+  @return RP_DATA = (evaluates to true) if the latest frame contained data
+  @return RP_ACK  = (evaluates to true) if the latest frame contained a reply to a command
+  @return RP_FAIL = (evaluates to false) if no useful info was processed
   */
 Response_t ld2410_check(LD2410_device_t *device);
 
@@ -132,18 +132,24 @@ Response_t ld2410_check(LD2410_device_t *device);
 /**
  * @brief Check whether the device is in config mode
  * (accepts commands)
+ * 
+ * @param device LD2410 device handle
  */
 bool ld2410_in_config_mode(LD2410_device_t *device);
 
 /**
  * @brief Check whether the device is in basic mode
  * (continuously sends basic presence data)
+ * 
+ * @param device LD2410 device handle
  */
 bool ld2410_in_basic_mode(LD2410_device_t *device);
 
 /**
  * @brief Check whether the device is in enhanced mode
  * (continuously sends enhanced presence data)
+ * 
+ * @param device LD2410 device handle
  */
 bool ld2410_in_enhanced_mode(LD2410_device_t *device);
 
@@ -158,6 +164,8 @@ bool ld2410_in_enhanced_mode(LD2410_device_t *device);
  * 6 - Auto thresholds failed;
  * 255 - The sensor status is invalid
  *
+ * 
+ * @param device LD2410 device handle
  * @return uint8_t
  */
 uint8_t ld2410_get_status(LD2410_device_t *device);
@@ -165,6 +173,8 @@ uint8_t ld2410_get_status(LD2410_device_t *device);
 /**
  * @brief Get the presence status as a c-string
  *
+ * 
+ * @param device LD2410 device handle
  * @return const char* :
  * "No target",
  * "Moving only",
@@ -178,17 +188,22 @@ const char *ld2410_status_string(LD2410_device_t *device);
 
 /**
  * @brief Check whether presence was detected in the latest frame
+ * 
+ * @param device LD2410 device handle
  */
 bool ld2410_presence_detected(LD2410_device_t *device);
 
 /**
  * @brief Check whether a stationary target was detected in the latest frame
+ * 
+ * @param device LD2410 device handle
  */
 bool ld2410_stationary_target_detected(LD2410_device_t *device);
 
 /**
  * @brief Get the distance to the stationary target in [cm]
  *
+ * @param device LD2410 device handle
  * @return unsigned long - distance in [cm]
  */
 unsigned long ld2410_stationary_target_distance(LD2410_device_t *device);
@@ -196,6 +211,7 @@ unsigned long ld2410_stationary_target_distance(LD2410_device_t *device);
 /**
  * @brief Get the signal from the stationary target
  *
+ * @param device LD2410 device handle
  * @return uint8_t - signal value [0:100]
  */
 uint8_t ld2410_stationary_target_signal(LD2410_device_t *device);
@@ -203,18 +219,22 @@ uint8_t ld2410_stationary_target_signal(LD2410_device_t *device);
 /**
  * @brief Get the Stationary Signals object, if in enhanced mode
  *
- * @return const MyLD2410::ValuesArray& - the signals for each detection gate
+ * @param device LD2410 device handle
+ * @return ValuesArray_t - the signals for each detection gate
  */
 ValuesArray_t ld2410_get_stationary_signals(LD2410_device_t *device);
 
 /**
  * @brief Check whether a moving target was detected in the latest frame
+ * 
+ * @param device LD2410 device handle
  */
 bool ld2410_moving_target_detected(LD2410_device_t *device);
 
 /**
  * @brief Get the distance to the moving target in [cm]
  *
+ * @param device LD2410 device handle
  * @return unsigned long - distance in [cm]
  */
 unsigned long ld2410_moving_target_distance(LD2410_device_t *device);
@@ -222,6 +242,7 @@ unsigned long ld2410_moving_target_distance(LD2410_device_t *device);
 /**
  * @brief Get the signal from the moving target
  *
+ * @param device LD2410 device handle
  * @return uint8_t - signal value [0:100]
  */
 uint8_t ld2410_moving_target_signal(LD2410_device_t *device);
@@ -229,13 +250,15 @@ uint8_t ld2410_moving_target_signal(LD2410_device_t *device);
 /**
  * @brief Get the Moving Signals object, if in enhanced mode
  *
- * @return const MyLD2410::ValuesArray& - the signals for each detection gate
+ * @param device LD2410 device handle
+ * @return ValuesArray_t - the signals for each detection gate
  */
 ValuesArray_t ld2410_get_moving_signals(LD2410_device_t *device);
 
 /**
  * @brief Get the detected distance
  *
+ * @param device LD2410 device handle
  * @return unsigned long - distance in [cm]
  */
 unsigned long ld2410_detected_distance(LD2410_device_t *device);
@@ -243,13 +266,17 @@ unsigned long ld2410_detected_distance(LD2410_device_t *device);
 /**
  * @brief Get the Bluetooth MAC address as an array uint8_t[6]
  *
+ * @param device LD2410 device handle
+ * @param return_ACM uint8_t array to output the MAC address on
  * @return const uint8_t*
  */
 void ld2410_get_MAC(LD2410_device_t *device, uint8_t *return_MAC);
 
 /**
  * @brief Get the Bluetooth MAC address as a String
- *
+ * 
+ * @param device LD2410 device handle
+ * @param return_ACM char array to output the MAC address on
  * @return String
  */
 void ld2410_get_MAC_str(LD2410_device_t *device, char *return_str);
@@ -257,6 +284,8 @@ void ld2410_get_MAC_str(LD2410_device_t *device, char *return_str);
 /**
  * @brief Get the Firmware as a String
  *
+ * @param device LD2410 device handle
+ * @param return_ACM char array to output the firmware version on
  * @return String
  */
 void ld2410_get_firmware(LD2410_device_t *device, char *return_str);
@@ -264,6 +293,7 @@ void ld2410_get_firmware(LD2410_device_t *device, char *return_str);
 /**
  *  @brief Get the Firmware Major
  *
+ *  @param device LD2410 device handle
  *  @return uint8_t
  */
 uint8_t ld2410_get_firmware_major(LD2410_device_t *device);
@@ -271,6 +301,7 @@ uint8_t ld2410_get_firmware_major(LD2410_device_t *device);
 /**
  *  @brief Get the Firmware Minor
  *
+ * @param device LD2410 device handle
  *  @return uint8_t
  */
 uint8_t ld2410_get_firmware_minor(LD2410_device_t *device);
@@ -278,6 +309,7 @@ uint8_t ld2410_get_firmware_minor(LD2410_device_t *device);
 /**
  * @brief Get the protocol version
  *
+ * @param device LD2410 device handle
  * @return unsigned long
  */
 unsigned long ld2410_get_version(LD2410_device_t *device);
@@ -285,13 +317,15 @@ unsigned long ld2410_get_version(LD2410_device_t *device);
 /**
  * @brief Get the SensorData object
  *
- * @return const SensorData&
+ * @param device LD2410 device handle
+ * @return SensorData_t
  */
 SensorData_t ld2410_get_sensor_data(LD2410_device_t *device);
 
 /**
  * @brief Get the sensor resolution (gate-width) in [cm]
  *
+ * @param device LD2410 device handle
  * @return uint8_t either 20 or 75 on success, 0 on failure
  */
 uint8_t ld2410_get_resolution(LD2410_device_t *device);
@@ -301,20 +335,23 @@ uint8_t ld2410_get_resolution(LD2410_device_t *device);
 /**
  * @brief Get the detection thresholds for moving targets
  *
- * @return const ValuesArray&
+ * @param device LD2410 device handle
+ * @return ValuesArray_t
  */
 ValuesArray_t ld2410_get_moving_thresholds(LD2410_device_t *device);
 
 /**
  * @brief Get the detection thresholds for stationary targets
  *
- * @return const ValuesArray&
+ * @param device LD2410 device handle
+ * @return ValuesArray_t
  */
 ValuesArray_t ld2410_get_stationary_thresholds(LD2410_device_t *device);
 
 /**
  * @brief Get the maximum detection gate
  *
+ * @param device LD2410 device handle
  * @return uint8_t
  */
 uint8_t ld2410_get_range(LD2410_device_t *device);
@@ -322,6 +359,7 @@ uint8_t ld2410_get_range(LD2410_device_t *device);
 /**
  * @brief Get the maximum detection range in [cm]
  *
+ * @param device LD2410 device handle
  * @return unsigned long
  */
 unsigned long ld2410_get_range_cm(LD2410_device_t *device);
@@ -331,6 +369,7 @@ unsigned long ld2410_get_range_cm(LD2410_device_t *device);
  * The sensor begins reporting "no presence"
  * only after no motion has been detected for that many seconds.
  *
+ * @param device LD2410 device handle
  * @return uint8_t
  */
 uint8_t ld2410_get_no_one_window(LD2410_device_t *device);
@@ -341,6 +380,7 @@ uint8_t ld2410_get_no_one_window(LD2410_device_t *device);
 /**
  * @brief Request config mode
  *
+ * @param device LD2410 device handle
  * @param enable [true]/false
  * @return true on success
  */
@@ -349,6 +389,7 @@ bool ld2410_config_mode(LD2410_device_t *device, bool enable);
 /**
  * @brief Request enhanced mode
  *
+ * @param device LD2410 device handle
  * @param enable [true]/false
  * @return true on success
  */
@@ -357,6 +398,7 @@ bool ld2410_enhanced_mode(LD2410_device_t *device, bool enable);
 /**
  * @brief Request the current auxiliary configuration
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_aux_config(LD2410_device_t *device);
@@ -365,6 +407,7 @@ bool ld2410_request_aux_config(LD2410_device_t *device);
  * @brief Begin the automatic threshold detection routine
  * (firmware >= 2.44)
  *
+ * @param device LD2410 device handle
  * @param _timeout - allow for timeout [s] to leave the room: default 10
  * @return true on success
  */
@@ -374,6 +417,7 @@ bool ld2410_auto_thresholds(LD2410_device_t *device, uint8_t _timeout);
  * @brief Get the status of the automatic threshold detection routine
  * (firmware >= 2.44)
  *
+ * @param device LD2410 device handle
  * @return AutoStatus_t
  */
 AutoStatus_t ld2410_get_auto_status(LD2410_device_t *device);
@@ -381,6 +425,7 @@ AutoStatus_t ld2410_get_auto_status(LD2410_device_t *device);
 /**
  * @brief Request the Bluetooth MAC address
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_MAC(LD2410_device_t *device);
@@ -388,6 +433,7 @@ bool ld2410_request_MAC(LD2410_device_t *device);
 /**
  * @brief Request the Firmware
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_firmware(LD2410_device_t *device);
@@ -395,6 +441,7 @@ bool ld2410_request_firmware(LD2410_device_t *device);
 /**
  * @brief Request the resolution (gate-width)
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_resolution(LD2410_device_t *device);
@@ -402,6 +449,7 @@ bool ld2410_request_resolution(LD2410_device_t *device);
 /**
  * @brief Set the resolution of the sensor
  *
+ * @param device LD2410 device handle
  * @param fine true=20cm; [default: false]=75cm
  * @return true on success
  */
@@ -411,6 +459,7 @@ bool ld2410_set_resolution(LD2410_device_t *device, bool fine);
  * @brief Request the sensor parameters:
  * range, motion thresholds, stationary thresholds, no-one window
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_parameters(LD2410_device_t *device);
@@ -418,6 +467,7 @@ bool ld2410_request_parameters(LD2410_device_t *device);
 /**
  * @brief Set the gate parameters for a particular gate, or for all gates at once
  *
+ * @param device LD2410 device handle
  * @param gate the gate to configure;
  * pass a value greater than 8 (e.g 0xFF) to apply the same thresholds to all gates
  * @param movingThreshold [0 - 100] default: 100
@@ -429,6 +479,8 @@ bool ld2410_set_gate_parameters(LD2410_device_t *device, uint8_t gate, uint8_t m
 /**
  * @brief Set the parameters for all gates at once, as well as the no-one window
  *
+ * @todo
+ * @param device LD2410 device handle
  * @param moving_thresholds as a ValueArray
  * @param stationary_thresholds as a ValueArray
  * @param noOneWindow
@@ -439,6 +491,7 @@ bool ld2410_set_gate_parameters(LD2410_device_t *device, uint8_t gate, uint8_t m
 /**
  * @brief Set the detection range for moving targets, stationary targets, as well as the no-one window
  *
+ * @param device LD2410 device handle
  * @param movingGate
  * @param stationaryGate
  * @param noOneWindow default: 5
@@ -449,6 +502,7 @@ bool ld2410_set_max_gate(LD2410_device_t *device, uint8_t movingGate, uint8_t st
 /**
  * @brief Set the no-one window parameter
  *
+ * @param device LD2410 device handle
  * @param noOneWindow in [s]
  * @return true on success
  */
@@ -457,6 +511,7 @@ bool ld2410_set_no_one_window(LD2410_device_t *device, uint8_t noOneWindow);
 /**
  * @brief Set the maximum moving gate
  *
+ * @param device LD2410 device handle
  * @param movingGate
  * @return true on success
  */
@@ -465,6 +520,7 @@ bool ld2410_set_max_moving_gate(LD2410_device_t *device, uint8_t movingGate);
 /**
  * @brief Set the maximum stationary gate
  *
+ * @param device LD2410 device handle
  * @param stationaryGate
  * @return true on success
  */
@@ -473,6 +529,7 @@ bool ld2410_set_max_stationary_gate(LD2410_device_t *device, uint8_t stationaryG
 /**
  * @brief Get the maximum moving gate
  *
+ * @param device LD2410 device handle
  * @return the maximum moving-target gate
  */
 uint8_t ld2410_get_max_moving_gate(LD2410_device_t *device);
@@ -480,6 +537,7 @@ uint8_t ld2410_get_max_moving_gate(LD2410_device_t *device);
 /**
  * @brief Get the maximum stationary gate
  *
+ * @param device LD2410 device handle
  * @return the maximum stationary-target gate
  */
 uint8_t ld2410_get_max_stationary_gate(LD2410_device_t *device);
@@ -487,6 +545,7 @@ uint8_t ld2410_get_max_stationary_gate(LD2410_device_t *device);
 /**
  * @brief Request reset to factory default parameters
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_reset(LD2410_device_t *device);
@@ -494,6 +553,7 @@ bool ld2410_request_reset(LD2410_device_t *device);
 /**
  * @brief Request reboot
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_reboot(LD2410_device_t *device);
@@ -501,6 +561,7 @@ bool ld2410_request_reboot(LD2410_device_t *device);
 /**
  * @brief Turn Bluetooth ON
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_BT_on(LD2410_device_t *device);
@@ -508,6 +569,7 @@ bool ld2410_request_BT_on(LD2410_device_t *device);
 /**
  * @brief Turn Bluetooth OFF
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_request_BT_off(LD2410_device_t *device);
@@ -517,7 +579,8 @@ bool ld2410_request_BT_off(LD2410_device_t *device);
  *
  * The BT password must be 6 characters long. If the string is shorter, it will be padded with spaces '\20'. If it is longer, only the first 6 characters will be used.
  *
- * @param passwd c-string
+ * @param device LD2410 device handle
+ * @param passwd char array
  * @return true on success
  */
 bool ld2410_set_BT_password(LD2410_device_t *device, const char *passwd);
@@ -525,6 +588,7 @@ bool ld2410_set_BT_password(LD2410_device_t *device, const char *passwd);
 /**
  * @brief Reset the BT password
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_reset_BT_password(LD2410_device_t *device);
@@ -532,6 +596,7 @@ bool ld2410_reset_BT_password(LD2410_device_t *device);
 /**
  * @brief Reset the serial baud rate. The sensor reboots at the new rate on success
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_set_baud(LD2410_device_t *device, uint8_t baud);
@@ -539,6 +604,7 @@ bool ld2410_set_baud(LD2410_device_t *device, uint8_t baud);
 /**
  * @brief Get the Light Level
  *
+ * @param device LD2410 device handle
  * @return uint8_t
  */
 uint8_t ld2410_get_light_level(LD2410_device_t *device);
@@ -546,6 +612,7 @@ uint8_t ld2410_get_light_level(LD2410_device_t *device);
 /**
  * @brief Get the Light Control parameter
  *
+ * @param device LD2410 device handle
  * @return LightControl_t enum
  */
 LightControl_t ld2410_get_light_control(LD2410_device_t *device);
@@ -553,10 +620,10 @@ LightControl_t ld2410_get_light_control(LD2410_device_t *device);
 /**
  * @brief Set the Auxiliary Control parameters
  *
+ * @param device LD2410 device handle
  * @param light_control
  * @param light_threshold
  * @param output_control
- *
  * @return true on success
  */
 bool ld2410_set_aux_control(LD2410_device_t *device,
@@ -567,6 +634,7 @@ bool ld2410_set_aux_control(LD2410_device_t *device,
 /**
  * @brief Reset the Auxiliary Control parameters to their default values
  *
+ * @param device LD2410 device handle
  * @return true on success
  */
 bool ld2410_reset_aux_control(LD2410_device_t *device);
@@ -574,6 +642,7 @@ bool ld2410_reset_aux_control(LD2410_device_t *device);
 /**
  * @brief Get the Light Threshold
  *
+ * @param device LD2410 device handle
  * @return uint8_t
  */
 uint8_t ld2410_get_light_threshold(LD2410_device_t *device);
@@ -581,13 +650,15 @@ uint8_t ld2410_get_light_threshold(LD2410_device_t *device);
 /**
  * @brief Get the Output Control parameter
  *
+ * @param device LD2410 device handle
  * @return OutputControl_t enum
  */
-OutputControl_t ld2410_get_output_control();
+OutputControl_t ld2410_get_output_control(LD2410_device_t *device);
 
 /**
  * @brief Get the Light Level
  *
+ * @param device LD2410 device handle
  * @return uint8_t
  */
-uint8_t getOutLevel();
+uint8_t getOutLevel(LD2410_device_t *device);

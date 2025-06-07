@@ -1,6 +1,9 @@
 # LD2410B/C ESP-IDF Component
 
 This component eases the connection, configuration and use of the LD2410B/C presence sensor.
+Most of the code is a ESP32 port of the [LD2410 Arduino library](https://github.com/iavorvel/MyLD2410).
+
+Note: this library has been tested only on the ESP32-H2 dev board. Also not all of the methods have been tested. If you encounter a problem with a specific device or method please open an issue.
 
 ## How to use
 

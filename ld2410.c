@@ -142,12 +142,12 @@ Response_t ld2410_check(LD2410_device_t *device)
       if (DEBUG)
          ESP_LOGD(TAG, "Reading in check: %02x %02x %02x %02x ", (device->head_buf)[0], (device->head_buf)[1], (device->head_buf)[2], (device->head_buf)[3]);
       if (buffer_ends_with(device->head_buf, device->head_buf_i, LD2410_Head_Config) && ld2410_process_ack(device))
-         return ACK;
+         return RP_ACK;
       if (buffer_ends_with(device->head_buf, device->head_buf_i, LD2410_Head_Data) && ld2410_process_data(device))
-         return DATA;
+         return RP_DATA;
       ESP_ERROR_CHECK(uart_get_buffered_data_len(CONFIG_LD2410_UART_PORT_NUM, (size_t *)&len));
    }
-   return FAIL;
+   return RP_FAIL;
 }
 
 bool ld2410_send_command(LD2410_device_t *device, const uint8_t *command)
