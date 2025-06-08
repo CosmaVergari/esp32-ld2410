@@ -1,4 +1,4 @@
-version: "0.0.1"
+version: "0.0.2"
 description: "Library for handling LD2410 component using UART"
 url: "https://github.com/CosmaVergari/esp32-ld2410"
 repository: "https://github.com/CosmaVergari/esp32-ld2410.git"
