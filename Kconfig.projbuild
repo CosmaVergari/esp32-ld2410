@@ -36,6 +36,22 @@ menu "Driver LD2410 presence sensor"
                   UART communication speed for LD2410 example. Can be changed by changing parameters
                   to the LD2410.
 
+      config LD2410_OUT_PIN_CONNECTED
+            bool "LD2410 OUT pin connected"
+            default false
+            help
+                  Enables the management of the LD2410 OUT pin if connected to the board.
+                  Can be useful to setup interrupts or have the LD2410 work as a wake source from sleep.
+
+      config LD2410_OUT_PIN_TASK_STACK_SIZE
+        int "LD2410 out pin handler task stack size"
+        range 1024 16384
+        default 2048
+        help
+            Defines stack size for the LD2410 task that handles the changes on the OUT pin. 
+            Insufficient stack size can cause crash.
+            It does not affect anything if "LD2410 OUT pin connected" is false
+
       config LD2410_ENABLE_DEBUG
             bool "LD2410 Enable Debug"
             default false

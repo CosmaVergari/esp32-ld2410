@@ -1,11 +1,25 @@
 #pragma once
 
 #include <stdbool.h>
+
 #define LD2410_LATEST_FIRMWARE "2.44"
 #define LD2410_BUFFER_SIZE 0x40
 #define FIRMWARE_STR_SIZE (20)
 #define MAC_SIZE (6)
 #define MAC_STR_SIZE (20)
+
+#ifdef CONFIG_LD2410_OUT_PIN_CONNECTED
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "driver/gpio.h"
+
+/**
+ * @brief The function signature for the LD2410 OUT pin state change handler.
+ * @param presence true if the sensor detects a presence (positive edge), false otherwise
+ */
+typedef void (*ld2410_callback_t)(bool presence);
+#endif
 
 /**
  * @brief The auxiliary light control status
@@ -101,6 +115,11 @@ typedef struct LD2410_device
    int head_buf_i;
    uint8_t *in_buf;
    uint8_t in_buf_i;
+
+#ifdef CONFIG_LD2410_OUT_PIN_CONNECTED
+   gpio_num_t out_pin;
+   ld2410_callback_t out_pin_callback;
+#endif
 } LD2410_device_t;
 
 // CONTROLS
@@ -139,12 +158,33 @@ void ld2410_end(LD2410_device_t *device);
   */
 Response_t ld2410_check(LD2410_device_t *device);
 
+#ifdef CONFIG_LD2410_OUT_PIN_CONNECTED
+/**
+ * @brief Attach the callback for the device
+ * @note This function must be called BEFORE installing the ISR service (gpio_install_isr_service)
+ *
+ * @param device LD2410 device handle
+ * @param cb Callback function pointer
+ * @param out_pin The GPIO the OUT pin is connected to
+ * @return esp_err_t ESP_OK if the callback is correctly attached
+ */
+esp_err_t ld2410_out_pin_init_handler(LD2410_device_t *device, gpio_num_t out_pin, ld2410_callback_t cb);
+/**
+ * @brief Attach the callback for the device
+ * @note This function must be called AFTER installing the ISR service (gpio_install_isr_service)
+ *
+ * @param device LD2410 device handle
+ * @return esp_err_t ESP_OK if the callback is correctly attached
+ */
+esp_err_t ld2410_out_pin_attach_handler(LD2410_device_t *device);
+#endif
+
 // GETTERS
 
 /**
  * @brief Check whether the device is in config mode
  * (accepts commands)
- * 
+ *
  * @param device LD2410 device handle
  */
 bool ld2410_in_config_mode(LD2410_device_t *device);
@@ -152,7 +192,7 @@ bool ld2410_in_config_mode(LD2410_device_t *device);
 /**
  * @brief Check whether the device is in basic mode
  * (continuously sends basic presence data)
- * 
+ *
  * @param device LD2410 device handle
  */
 bool ld2410_in_basic_mode(LD2410_device_t *device);
@@ -160,7 +200,7 @@ bool ld2410_in_basic_mode(LD2410_device_t *device);
 /**
  * @brief Check whether the device is in enhanced mode
  * (continuously sends enhanced presence data)
- * 
+ *
  * @param device LD2410 device handle
  */
 bool ld2410_in_enhanced_mode(LD2410_device_t *device);
@@ -176,7 +216,7 @@ bool ld2410_in_enhanced_mode(LD2410_device_t *device);
  * 6 - Auto thresholds failed;
  * 255 - The sensor status is invalid
  *
- * 
+ *
  * @param device LD2410 device handle
  * @return uint8_t
  */
@@ -185,7 +225,7 @@ uint8_t ld2410_get_status(LD2410_device_t *device);
 /**
  * @brief Get the presence status as a c-string
  *
- * 
+ *
  * @param device LD2410 device handle
  * @return const char* :
  * "No target",
@@ -200,14 +240,14 @@ const char *ld2410_status_string(LD2410_device_t *device);
 
 /**
  * @brief Check whether presence was detected in the latest frame
- * 
+ *
  * @param device LD2410 device handle
  */
 bool ld2410_presence_detected(LD2410_device_t *device);
 
 /**
  * @brief Check whether a stationary target was detected in the latest frame
- * 
+ *
  * @param device LD2410 device handle
  */
 bool ld2410_stationary_target_detected(LD2410_device_t *device);
@@ -238,7 +278,7 @@ ValuesArray_t ld2410_get_stationary_signals(LD2410_device_t *device);
 
 /**
  * @brief Check whether a moving target was detected in the latest frame
- * 
+ *
  * @param device LD2410 device handle
  */
 bool ld2410_moving_target_detected(LD2410_device_t *device);
@@ -286,7 +326,7 @@ void ld2410_get_MAC(LD2410_device_t *device, uint8_t *return_MAC);
 
 /**
  * @brief Get the Bluetooth MAC address as a String
- * 
+ *
  * @param device LD2410 device handle
  * @param return_ACM char array to output the MAC address on
  * @return String

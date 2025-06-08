@@ -5,6 +5,7 @@
 #include "driver/uart.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "esp_check.h"
 
 #ifdef DEBUG
 #define DEBUG 1
@@ -16,6 +17,7 @@
 #define HEAD_BUF_SIZE (4)
 
 #define UART_RX_READ_TIMEOUT_MS 20
+#define OUT_PIN_NULL -1
 
 static const char *TAG = "LD2410";
 
@@ -122,6 +124,11 @@ LD2410_device_t *ld2410_new()
    device->head_buf_i = 0;
    device->in_buf = (uint8_t *)malloc(LD2410_BUFFER_SIZE);
    device->in_buf_i = 0;
+
+#ifdef CONFIG_LD2410_OUT_PIN_CONNECTED
+   device->out_pin = OUT_PIN_NULL;
+   device->out_pin_callback = NULL;
+#endif
 
    return device;
 }
@@ -421,6 +428,93 @@ void ld2410_free(LD2410_device_t *device)
    free(device);
 }
 
+#ifdef CONFIG_LD2410_OUT_PIN_CONNECTED
+#define OUT_PIN_EVENT_QUEUE_SIZE 10
+
+/**
+ * Single event queue since all we care is propagating to device, the reading of the new
+ * GPIO value is done in the handler task.
+ */
+static QueueHandle_t ld2410_gpio_evt_queue;
+
+static void IRAM_ATTR ld2410_isr_handler(void *arg)
+{
+   LD2410_device_t *device = (LD2410_device_t *)arg;
+   xQueueSendFromISR(ld2410_gpio_evt_queue, &device, NULL);
+}
+
+bool ld2410_presence_detected_no_validity_check(LD2410_device_t *device);
+static void ld2410_out_pin_task(void *arg)
+{
+   LD2410_device_t *device;
+   for (;;)
+   {
+      if (xQueueReceive(ld2410_gpio_evt_queue, &device, portMAX_DELAY))
+      {
+         if (DEBUG)
+            ESP_LOGD(TAG, "Device on out pin %d changed state", device->out_pin);
+
+         // Clear the FIFO queues
+         ld2410_flush(device);
+
+         // Take the value stored before this state change
+         bool prevPresence = ld2410_presence_detected_no_validity_check(device);
+
+         bool confirmed = false;
+         for (int i = 0; i < 100; i++)
+         {
+            if (ld2410_check(device))
+            {
+               bool newPresence = ld2410_presence_detected(device);
+               if (prevPresence != newPresence)
+               {
+                  if (DEBUG)
+                     ESP_LOGD(TAG, "Presence change confirmed by device. Calling callback with value: %d", newPresence);
+                  device->out_pin_callback(newPresence);
+                  confirmed = true;
+                  break;
+               }
+            }
+            vTaskDelay(10 / portTICK_PERIOD_MS); // Needed for device to read UART
+         }
+         if (!confirmed)
+         {
+            ESP_LOGW(TAG, "The device issued a change on OUT pin %d but did not output the new value via UART (port %d)",
+                     device->out_pin, CONFIG_LD2410_UART_PORT_NUM);
+         }
+      }
+   }
+}
+
+esp_err_t ld2410_out_pin_init_handler(LD2410_device_t *device, gpio_num_t out_pin, ld2410_callback_t cb)
+{
+   device->out_pin = out_pin;
+   device->out_pin_callback = cb;
+
+   // Create the GPIO config structure
+   gpio_config_t io_conf = {};
+   io_conf.intr_type = GPIO_INTR_ANYEDGE; // Trigger ISR on positive and negative edge
+   io_conf.pin_bit_mask = (1ULL << out_pin);
+   io_conf.mode = GPIO_MODE_INPUT;
+   io_conf.pull_up_en = 1; // enable pull-up
+   ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Failed to config OUT pin GPIO");
+
+   // This is the first time this method is run so create the handling queue and task
+   if (!ld2410_gpio_evt_queue)
+   {
+      ld2410_gpio_evt_queue = xQueueCreate(OUT_PIN_EVENT_QUEUE_SIZE, sizeof(LD2410_device_t *));
+      xTaskCreate(ld2410_out_pin_task, "ld2410_out_pin_task", CONFIG_LD2410_OUT_PIN_TASK_STACK_SIZE, NULL, 10, NULL);
+   }
+   return ESP_OK;
+}
+esp_err_t ld2410_out_pin_attach_handler(LD2410_device_t *device)
+{
+   ESP_RETURN_ON_FALSE(device->out_pin != OUT_PIN_NULL && device->out_pin_callback != NULL,
+                       ESP_ERR_NOT_ALLOWED, TAG, "Must call ld2410_out_pin_init_handler before attaching it!");
+   return gpio_isr_handler_add(device->out_pin, ld2410_isr_handler, (void *)device);
+}
+#endif
+
 bool ld2410_in_config_mode(LD2410_device_t *device)
 {
    return device->isConfig;
@@ -451,9 +545,14 @@ const char *ld2410_status_string(LD2410_device_t *device)
    return LD2410_tStatus[(device->sData).status];
 }
 
+bool ld2410_presence_detected_no_validity_check(LD2410_device_t *device)
+{
+   return ((device->sData).status) && ((device->sData).status < 4); // 1,2,3
+}
+
 bool ld2410_presence_detected(LD2410_device_t *device)
 {
-   return ld2410_is_data_valid(device) && ((device->sData).status) && ((device->sData).status < 4); // 1,2,3
+   return ld2410_is_data_valid(device) && ld2410_presence_detected_no_validity_check(device);
 }
 
 bool ld2410_stationary_target_detected(LD2410_device_t *device)
