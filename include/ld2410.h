@@ -115,6 +115,18 @@ LD2410_device_t *ld2410_new();
 bool ld2410_begin(LD2410_device_t *device);
 
 /**
+ * @brief This function empties the UART FIFO buffers related to the device.
+ * Call this function when you want to discard the previous device messages.
+ */
+void ld2410_flush(LD2410_device_t *device);
+
+/**
+ * @brief Free the memory allocated to the device handle. Call this only if you
+ * do not intend to use the device handle anymore.
+ */
+void ld2410_free(LD2410_device_t *device);
+
+/**
  * @brief Call this function to gracefully close the sensor. Useful for entering sleep mode.
  */
 void ld2410_end(LD2410_device_t *device);

@@ -12,7 +12,7 @@ Note: this library has been tested only on the ESP32-H2 dev board. Also not all 
 Add this component to an esp-idf project with the following command:
 
 ```bash
-idf.py add-dependency "iops/ld2410"
+idf.py add-dependency "cosmavergari/ld2410"
 ```
 
 ### Setup the Hardware

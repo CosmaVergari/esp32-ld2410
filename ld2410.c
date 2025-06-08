@@ -404,6 +404,23 @@ bool ld2410_begin(LD2410_device_t *device)
    return online;
 }
 
+void ld2410_flush(LD2410_device_t *device)
+{
+   uart_flush_input(CONFIG_LD2410_UART_PORT_NUM);
+   uart_wait_tx_done(CONFIG_LD2410_UART_PORT_NUM, 1000 / portTICK_PERIOD_MS);
+}
+
+void ld2410_free(LD2410_device_t *device)
+{
+   if (device->in_buf)
+      free(device->in_buf);
+   if (device->data)
+      free(device->data);
+   if (device->head_buf)
+      free(device->head_buf);
+   free(device);
+}
+
 bool ld2410_in_config_mode(LD2410_device_t *device)
 {
    return device->isConfig;
